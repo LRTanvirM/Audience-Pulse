@@ -24,14 +24,10 @@ export default function ParticipantView({ db, initialSessionId }) {
             if (doc.exists()) {
                 const data = doc.data();
 
-                // Check for expiration (6 hours)
-                const createdAt = data.createdAt?.toDate();
-                if (createdAt) {
-                    const now = new Date();
-                    const diffHours = (now - createdAt) / (1000 * 60 * 60);
-                    if (diffHours >= 6) {
-                        setIsExpired(true);
-                    }
+                // Check for expiration
+                const expiresAt = data.expiresAt?.toDate();
+                if (expiresAt && new Date() > expiresAt) {
+                    setIsExpired(true);
                 }
 
                 setSessionData(prev => {
