@@ -122,6 +122,8 @@ export default function ParticipantView({ db, initialSessionId }) {
                             placeholder="1234"
                             className="text-center text-2xl tracking-[0.5em] font-mono uppercase"
                             maxLength={4}
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                         />
                         <Button onClick={handleJoin} className="w-full" disabled={sessionId.length !== 4}>
                             Next
@@ -203,7 +205,7 @@ export default function ParticipantView({ db, initialSessionId }) {
     }
 
     return (
-        <div className="min-h-screen flex flex-col p-6 max-w-md mx-auto justify-center">
+        <div className="min-h-screen flex flex-col p-4 md:p-6 max-w-md mx-auto justify-center">
             <div className="mb-8">
                 <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-wide mb-4">
                     Live Question
@@ -232,7 +234,7 @@ export default function ParticipantView({ db, initialSessionId }) {
                             value={answer}
                             onChange={(e) => setAnswer(e.target.value)}
                             placeholder="Type your answer here..."
-                            className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none h-40 resize-none"
+                            className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none h-40 resize-none text-base"
                         />
                         <Button onClick={() => submitAnswer()} className="w-full" disabled={!answer}>
                             Submit Answer
