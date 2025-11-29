@@ -44,28 +44,28 @@ export default function LandingPage({ setAppState, setSessionId, db }) {
             <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl px-4">
                 <button
                     onClick={createSession}
-                    className="group relative flex flex-col items-center p-8 bg-white hover:bg-indigo-50 border-2 border-transparent hover:border-indigo-200 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 text-left"
+                    className="group relative flex flex-col items-center p-8 bg-white hover:bg-indigo-50 border-2 border-transparent hover:border-indigo-200 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 text-left h-full"
                 >
                     <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                         <Monitor className="w-8 h-8 text-indigo-600" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Host a Session</h2>
-                    <p className="text-gray-500 text-center">Create a new room, generate a QR code, and control the flow.</p>
-                    <div className="absolute bottom-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <p className="text-gray-500 text-center mb-8">Create a new room, generate a QR code, and control the flow.</p>
+                    <div className="mt-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <span className="flex items-center text-indigo-600 font-semibold">Get Started <ArrowRight className="w-4 h-4 ml-2" /></span>
                     </div>
                 </button>
 
                 <button
                     onClick={() => setAppState('participant')}
-                    className="group relative flex flex-col items-center p-8 bg-white hover:bg-blue-50 border-2 border-transparent hover:border-blue-200 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 text-left"
+                    className="group relative flex flex-col items-center p-8 bg-white hover:bg-blue-50 border-2 border-transparent hover:border-blue-200 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 text-left h-full"
                 >
                     <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                         <Smartphone className="w-8 h-8 text-blue-600" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Join Session</h2>
-                    <p className="text-gray-500 text-center">Enter a code or scan a QR to participate in a live poll.</p>
-                    <div className="absolute bottom-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <p className="text-gray-500 text-center mb-8">Enter a code or scan a QR to participate in a live poll.</p>
+                    <div className="mt-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <span className="flex items-center text-blue-600 font-semibold">Join Now <ArrowRight className="w-4 h-4 ml-2" /></span>
                     </div>
                 </button>
