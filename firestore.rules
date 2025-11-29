@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if session is active (created within last 6 hours)
+    function isSessionActive(sessionData) {
+      return request.time < sessionData.createdAt + duration.value(6, 'h');
+    }
+
+    // Helper function to validate session data structure
+    function isValidSession() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['createdAt', 'state']) &&
+             data.state in ['waiting', 'voting', 'results', 'ended'] &&
+             data.createdAt == request.time;
+    }
+
+    // SESSIONS COLLECTION
+    match /sessions/{sessionId} {
+      // Allow creating a new session
+      allow create: if isValidSession();
+      
+      // Allow reading session data (needed for participants to join)
+      allow read: if true;
+
+      // Allow updating session only if it was created less than 6 hours ago
+      allow update: if isSessionActive(resource.data);
+      
+      // RESPONSES SUBCOLLECTION
+      match /responses/{responseId} {
+        allow read: if true;
+        // Allow creating a response only if:
+        // 1. The parent session is active (created < 6 hours ago)
+        // 2. The parent session state is 'voting'
+        // 3. The response has the correct structure
+        allow create: if get(/databases/$(database)/documents/sessions/$(sessionId)).data.state == 'voting' &&
+                         isSessionActive(get(/databases/$(database)/documents/sessions/$(sessionId)).data);
+      }
+
+      // QUESTIONS SUBCOLLECTION
+      match /questions/{questionId} {
+        allow read: if true;
+        // Allow host to add questions only if session is active
+        allow create: if isSessionActive(get(/databases/$(database)/documents/sessions/$(sessionId)).data);
+      }
+    }
+  }
+}

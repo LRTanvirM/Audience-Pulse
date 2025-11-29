@@ -9,10 +9,12 @@ import Input from './ui/Input';
 export default function ParticipantView({ db, initialSessionId }) {
     const [sessionId, setSessionId] = useState(initialSessionId || '');
     const [nickname, setNickname] = useState(localStorage.getItem('participant_name') || '');
-    const [step, setStep] = useState(initialSessionId ? 'name' : 'join'); // join, name, participating
+    const [step, setStep] = useState(initialSessionId ? 'verifying' : 'join'); // join, verifying, name, participating
     const [sessionData, setSessionData] = useState(null);
     const [answer, setAnswer] = useState('');
     const [submitted, setSubmitted] = useState(false);
+
+    const [isExpired, setIsExpired] = useState(false);
 
     useEffect(() => {
         if (step === 'join' || !sessionId) return;
@@ -20,6 +22,17 @@ export default function ParticipantView({ db, initialSessionId }) {
         const unsub = onSnapshot(doc(db, 'sessions', sessionId), (doc) => {
             if (doc.exists()) {
                 const data = doc.data();
+
+                // Check for expiration (6 hours)
+                const createdAt = data.createdAt?.toDate();
+                if (createdAt) {
+                    const now = new Date();
+                    const diffHours = (now - createdAt) / (1000 * 60 * 60);
+                    if (diffHours >= 6) {
+                        setIsExpired(true);
+                    }
+                }
+
                 setSessionData(prev => {
                     if (prev?.currentQuestion?.id !== data?.currentQuestion?.id) {
                         setSubmitted(false);
@@ -27,6 +40,17 @@ export default function ParticipantView({ db, initialSessionId }) {
                     }
                     return data;
                 });
+
+                // Handle step transitions based on requireName
+                if (step === 'verifying') {
+                    if (data.requireName) {
+                        setStep('name');
+                    } else {
+                        setNickname('Anonymous');
+                        localStorage.setItem('participant_name', 'Anonymous');
+                        setStep('participating');
+                    }
+                }
             } else {
                 toast.error("Session not found!");
                 setStep('join');
@@ -36,8 +60,27 @@ export default function ParticipantView({ db, initialSessionId }) {
         return () => unsub();
     }, [step, sessionId, db]);
 
+    if (isExpired) {
+        return (
+            <div className="min-h-screen flex items-center justify-center p-4">
+                <Card className="max-w-md w-full p-8 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle className="w-8 h-8 text-red-600" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Session Expired</h1>
+                    <p className="text-gray-600">
+                        This session has exceeded the 6-hour time limit and is no longer active.
+                    </p>
+                    <Button className="mt-6 w-full" onClick={() => window.location.reload()}>
+                        Return to Home
+                    </Button>
+                </Card>
+            </div>
+        );
+    }
+
     const handleJoin = () => {
-        if (sessionId.length === 4) setStep('name');
+        if (sessionId.length === 4) setStep('verifying');
     };
 
     const handleNameSubmit = () => {
@@ -88,6 +131,10 @@ export default function ParticipantView({ db, initialSessionId }) {
                 </Card>
             </div>
         );
+    }
+
+    if (step === 'verifying') {
+        return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
     }
 
     if (step === 'name') {

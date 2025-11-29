@@ -1,23 +1,46 @@
 import React from 'react';
 import { BarChart2, Monitor, ArrowRight, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { generateSessionId } from '../utils';
 
 export default function LandingPage({ setAppState, setSessionId, db }) {
+    const [savedSessionId, setSavedSessionId] = React.useState(null);
+
+    React.useEffect(() => {
+        const saved = localStorage.getItem('host_session_id');
+        if (saved) {
+            setSavedSessionId(saved);
+        }
+    }, []);
+
     const createSession = async () => {
         const newId = generateSessionId();
         try {
+            // Set expiration to 6 hours from now
+            const expireAtDate = new Date();
+            expireAtDate.setHours(expireAtDate.getHours() + 6);
+
             await setDoc(doc(db, 'sessions', newId), {
                 createdAt: serverTimestamp(),
+                expireAt: Timestamp.fromDate(expireAtDate),
                 state: 'waiting',
-                currentQuestion: null
+                currentQuestion: null,
+                requireName: false
             });
+            localStorage.setItem('host_session_id', newId);
             setSessionId(newId);
             setAppState('host');
         } catch (err) {
             console.error("Error creating session:", err);
             toast.error("Failed to create session. Check console.");
+        }
+    };
+
+    const rejoinSession = () => {
+        if (savedSessionId) {
+            setSessionId(savedSessionId);
+            setAppState('host');
         }
     };
 
@@ -39,6 +62,17 @@ export default function LandingPage({ setAppState, setSessionId, db }) {
                 <p className="text-xl text-gray-500 max-w-lg mx-auto">
                     Real-time interactive polls and Q&A for your workshops and seminars.
                 </p>
+
+                {savedSessionId && (
+                    <div className="pt-4 animate-in fade-in slide-in-from-top-4">
+                        <button
+                            onClick={rejoinSession}
+                            className="inline-flex items-center px-6 py-3 rounded-full bg-white border-2 border-indigo-100 text-indigo-600 font-semibold shadow-sm hover:bg-indigo-50 hover:border-indigo-200 transition-all"
+                        >
+                            Rejoin Session {savedSessionId} <ArrowRight className="w-4 h-4 ml-2" />
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl px-4">

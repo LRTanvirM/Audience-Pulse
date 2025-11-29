@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { doc, onSnapshot, collection, updateDoc, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { Monitor, Users, Play, List, Type, Image as ImageIcon, BarChart2 } from 'lucide-react';
+import { Monitor, Users, Play, List, Type, Image as ImageIcon, BarChart2, AlertCircle } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import Button from './ui/Button';
@@ -15,9 +15,23 @@ export default function HostView({ db, sessionId }) {
     const [options, setOptions] = useState([{ id: '1', value: '' }, { id: '2', value: '' }]);
     const [questions, setQuestions] = useState([]);
 
+    const [isExpired, setIsExpired] = useState(false);
+
     useEffect(() => {
         const unsubSession = onSnapshot(doc(db, 'sessions', sessionId), (doc) => {
-            setSessionData(doc.data());
+            const data = doc.data();
+            if (data) {
+                // Check for expiration (6 hours)
+                const createdAt = data.createdAt?.toDate();
+                if (createdAt) {
+                    const now = new Date();
+                    const diffHours = (now - createdAt) / (1000 * 60 * 60);
+                    if (diffHours >= 6) {
+                        setIsExpired(true);
+                    }
+                }
+                setSessionData(data);
+            }
         });
 
         const unsubResponses = onSnapshot(collection(db, 'sessions', sessionId, 'responses'), (snapshot) => {
@@ -37,6 +51,25 @@ export default function HostView({ db, sessionId }) {
             unsubQuestions();
         };
     }, [db, sessionId]);
+
+    if (isExpired) {
+        return (
+            <div className="min-h-screen flex items-center justify-center p-4">
+                <Card className="max-w-md w-full p-8 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle className="w-8 h-8 text-red-600" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Session Expired</h1>
+                    <p className="text-gray-600">
+                        This session has exceeded the 6-hour time limit and is no longer active.
+                    </p>
+                    <Button className="mt-6 w-full" onClick={() => window.location.reload()}>
+                        Return to Home
+                    </Button>
+                </Card>
+            </div>
+        );
+    }
 
     const startVoting = async () => {
         if (!questionText) return;
@@ -127,6 +160,15 @@ export default function HostView({ db, sessionId }) {
                             <Users className="w-4 h-4 mr-2 text-gray-400" />
                             {currentResponses.length}
                         </div>
+                    </div>
+                    <div className="flex items-center space-x-2 mr-4">
+                        <label className="text-sm text-gray-500 font-medium">Require Names</label>
+                        <button
+                            onClick={() => updateDoc(doc(db, 'sessions', sessionId), { requireName: !sessionData.requireName })}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${sessionData.requireName ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                        >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${sessionData.requireName ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
                     </div>
                     <Button
                         variant="ghost"
