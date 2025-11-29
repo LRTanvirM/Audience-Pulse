@@ -1,48 +1,66 @@
 rules_version = '2';
 service cloud.firestore {
+
+  // Helper to check if a session is still active
+  function isSessionActive(sessionId) {
+    // expects sessions/{sessionId}.expiresAt to be a Firestore timestamp
+    return get(
+      /databases/$(database)/documents/sessions/$(sessionId)
+    ).data.expiresAt > request.time;
+  }
+
   match /databases/{database}/documents {
-    
-    // Helper function to check if session is active (created within last 6 hours)
-    function isSessionActive(sessionData) {
-      return request.time < sessionData.createdAt + duration.value(6, 'h');
-    }
 
-    // Helper function to validate session data structure
-    function isValidSession() {
-      let data = request.resource.data;
-      return data.keys().hasAll(['createdAt', 'state']) &&
-             data.state in ['waiting', 'voting', 'results', 'ended'] &&
-             data.createdAt == request.time;
-    }
-
-    // SESSIONS COLLECTION
+    // ====== SESSIONS COLLECTION ======
     match /sessions/{sessionId} {
-      // Allow creating a new session
-      allow create: if isValidSession();
-      
-      // Allow reading session data (needed for participants to join)
+
+      // Anyone can read session metadata (to join & show results)
       allow read: if true;
 
-      // Allow updating session only if it was created less than 6 hours ago
-      allow update: if isSessionActive(resource.data);
-      
-      // RESPONSES SUBCOLLECTION
-      match /responses/{responseId} {
+      // Only authenticated users can create a session (Host)
+      allow create: if request.auth != null;
+
+      // Only the host can update/delete their own session
+      allow update, delete: if request.auth != null &&
+                            request.auth.uid == resource.data.hostId;
+
+      // ====== QUESTIONS SUBCOLLECTION ======
+      match /questions/{questionId} {
+
+        // Participants + Host need to read questions
         allow read: if true;
-        // Allow creating a response only if:
-        // 1. The parent session is active (created < 6 hours ago)
-        // 2. The parent session state is 'voting'
-        // 3. The response has the correct structure
-        allow create: if get(/databases/$(database)/documents/sessions/$(sessionId)).data.state == 'voting' &&
-                         isSessionActive(get(/databases/$(database)/documents/sessions/$(sessionId)).data);
+
+        // Only Host can create/update/delete questions,
+        // and only while the session is active
+        allow create, update, delete: if request.auth != null &&
+          isSessionActive(sessionId) &&
+          get(
+            /databases/$(database)/documents/sessions/$(sessionId)
+          ).data.hostId == request.auth.uid;
       }
 
-      // QUESTIONS SUBCOLLECTION
-      match /questions/{questionId} {
+      // ====== RESPONSES SUBCOLLECTION ======
+      match /responses/{responseId} {
+
+        // Host and participants can read responses (for live results)
         allow read: if true;
-        // Allow host to add questions only if session is active
-        allow create: if isSessionActive(get(/databases/$(database)/documents/sessions/$(sessionId)).data);
+
+        // Create: any signed-in user (anon or not) can submit a response
+        // but the stored uid must match the auth uid
+        allow create: if request.auth != null &&
+          isSessionActive(sessionId) &&
+          request.resource.data.uid == request.auth.uid;
+
+        // Update/Delete: a user can only change their own response
+        allow update, delete: if request.auth != null &&
+          isSessionActive(sessionId) &&
+          resource.data.uid == request.auth.uid;
       }
+    }
+
+    // ====== DENY EVERYTHING ELSE BY DEFAULT ======
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

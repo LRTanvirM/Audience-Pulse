@@ -2,6 +2,7 @@ import React from 'react';
 import { BarChart2, Monitor, ArrowRight, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { doc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { generateSessionId } from '../utils';
 
 export default function LandingPage({ setAppState, setSessionId, db }) {
@@ -21,9 +22,11 @@ export default function LandingPage({ setAppState, setSessionId, db }) {
             const expireAtDate = new Date();
             expireAtDate.setHours(expireAtDate.getHours() + 6);
 
+            const auth = getAuth();
             await setDoc(doc(db, 'sessions', newId), {
                 createdAt: serverTimestamp(),
-                expireAt: Timestamp.fromDate(expireAtDate),
+                expiresAt: Timestamp.fromDate(expireAtDate),
+                hostId: auth.currentUser.uid,
                 state: 'waiting',
                 currentQuestion: null,
                 requireName: false

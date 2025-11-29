@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -37,7 +38,21 @@ export default function App() {
         }
         try {
             const app = initializeApp(firebaseConfig);
-            setDb(getFirestore(app));
+            const auth = getAuth(app);
+
+            // Sign in anonymously
+            signInAnonymously(auth).catch((error) => {
+                console.error("Auth Error:", error);
+            });
+
+            // Wait for auth state
+            const unsubscribe = onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    setDb(getFirestore(app));
+                }
+            });
+
+            return () => unsubscribe();
         } catch (err) {
             console.error("Firebase init error:", err);
             setConfigError(true);

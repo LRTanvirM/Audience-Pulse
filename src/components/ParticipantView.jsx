@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { Smartphone, Loader2, Users, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Button from './ui/Button';
@@ -94,10 +95,12 @@ export default function ParticipantView({ db, initialSessionId }) {
         if (!finalAnswer) return;
 
         try {
+            const auth = getAuth();
             await addDoc(collection(db, 'sessions', sessionId, 'responses'), {
                 questionId: sessionData.currentQuestion.id,
                 answer: finalAnswer,
                 nickname: nickname,
+                uid: auth.currentUser.uid,
                 timestamp: serverTimestamp()
             });
             setSubmitted(true);
