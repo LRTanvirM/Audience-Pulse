@@ -29,6 +29,7 @@ export default function App() {
     const [sessionId, setSessionId] = useState('');
     const [db, setDb] = useState(null);
     const [configError, setConfigError] = useState(false);
+    const [authError, setAuthError] = useState(null);
 
     // Initialize Firebase
     useEffect(() => {
@@ -43,6 +44,7 @@ export default function App() {
             // Sign in anonymously
             signInAnonymously(auth).catch((error) => {
                 console.error("Auth Error:", error);
+                setAuthError(error.message);
             });
 
             // Wait for auth state
@@ -80,14 +82,28 @@ export default function App() {
                     <p className="text-gray-600 mb-6">
                         Please open <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-red-600">App.jsx</code> and fill in the <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">firebaseConfig</code> object with your project details.
                     </p>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg text-left text-xs font-mono overflow-x-auto">
-                        <pre>{`const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "...",
-  projectId: "...",
-  // ...
-};`}</pre>
+                </Card>
+            </div>
+        );
+    }
+
+    if (authError) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <Card className="max-w-md w-full p-8 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle className="w-8 h-8 text-red-600" />
                     </div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Authentication Failed</h1>
+                    <p className="text-gray-600 mb-4">
+                        Could not sign in to Firebase.
+                    </p>
+                    <div className="bg-red-50 p-4 rounded-lg text-left text-xs font-mono text-red-800 overflow-x-auto mb-6">
+                        {authError}
+                    </div>
+                    <p className="text-sm text-gray-500">
+                        <strong>Tip:</strong> Ensure "Anonymous" sign-in is enabled in your Firebase Console (Authentication &gt; Sign-in method).
+                    </p>
                 </Card>
             </div>
         );

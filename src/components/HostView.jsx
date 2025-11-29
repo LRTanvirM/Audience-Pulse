@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { getAuth } from 'firebase/auth';
 import { doc, onSnapshot, collection, updateDoc, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { Monitor, Users, Play, List, Type, Image as ImageIcon, BarChart2, AlertCircle } from 'lucide-react';
 import QRCode from 'react-qr-code';
@@ -66,6 +67,8 @@ export default function HostView({ db, sessionId }) {
             </div>
         );
     }
+
+
 
     const startVoting = async () => {
         if (!questionText) return;

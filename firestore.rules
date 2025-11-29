@@ -30,13 +30,9 @@ service cloud.firestore {
         // Participants + Host need to read questions
         allow read: if true;
 
-        // Only Host can create/update/delete questions,
-        // and only while the session is active
+        // Only Host can create/update/delete questions
         allow create, update, delete: if request.auth != null &&
-          isSessionActive(sessionId) &&
-          get(
-            /databases/$(database)/documents/sessions/$(sessionId)
-          ).data.hostId == request.auth.uid;
+          get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid;
       }
 
       // ====== RESPONSES SUBCOLLECTION ======
@@ -45,15 +41,12 @@ service cloud.firestore {
         // Host and participants can read responses (for live results)
         allow read: if true;
 
-        // Create: any signed-in user (anon or not) can submit a response
-        // but the stored uid must match the auth uid
+        // Create: any signed-in user can submit, but must use their own uid
         allow create: if request.auth != null &&
-          isSessionActive(sessionId) &&
           request.resource.data.uid == request.auth.uid;
 
         // Update/Delete: a user can only change their own response
         allow update, delete: if request.auth != null &&
-          isSessionActive(sessionId) &&
           resource.data.uid == request.auth.uid;
       }
     }
