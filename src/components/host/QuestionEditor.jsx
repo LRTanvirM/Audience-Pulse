@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Trash2, Timer, Palette, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Timer, Palette, GripVertical, BarChart2 } from 'lucide-react';
 import { Reorder, useDragControls } from 'framer-motion';
 
 const DraggableOption = ({ opt, idx, onChange, onRemove, isFocus, darkMode }) => {
@@ -39,7 +39,7 @@ const DraggableOption = ({ opt, idx, onChange, onRemove, isFocus, darkMode }) =>
     );
 };
 
-export default function QuestionEditor({ question, onChange, onSave, onDelete, brandColor, darkMode }) {
+export default function QuestionEditor({ question, onChange, onSave, onDelete, onViewResults, brandColor, darkMode }) {
     const [activePopover, setActivePopover] = React.useState(null); // 'timer' | 'color' | null
 
     if (!question) return <div className={`flex items-center justify-center h-full font-medium ${darkMode ? 'text-slate-600' : 'text-slate-400'}`}>Select or add a question</div>;
@@ -85,7 +85,27 @@ export default function QuestionEditor({ question, onChange, onSave, onDelete, b
     const currentTimerLabel = timerOptions.find(t => t.value === (question.timer || 'none'))?.label || 'No Timer';
 
     return (
-        <div className={`rounded-2xl shadow-sm border h-full flex flex-col overflow-hidden transition-colors duration-300 ${darkMode ? 'bg-slate-900/75 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
+        <div className={`rounded-2xl shadow-sm border h-full flex flex-col overflow-hidden transition-colors duration-300 relative ${darkMode ? 'bg-slate-900/75 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
+
+            {/* Results Button (Top Left) */}
+            <div className="absolute top-6 left-6 z-50">
+                <button
+                    onClick={onViewResults}
+                    disabled={!question.id || question.id === 'new'}
+                    className={`group flex items-center px-4 py-3 rounded-full font-bold transition-all shadow-lg hover:-translate-y-0.5 ${!question.id || question.id === 'new'
+                        ? 'opacity-0 pointer-events-none'
+                        : darkMode
+                            ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                            : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                        }`}
+                >
+                    <BarChart2 size={20} />
+                    <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap">
+                        Results
+                    </span>
+                </button>
+            </div>
+
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8" onClick={() => setActivePopover(null)}>
 
                 {/* Settings Toolbar (Moved to Top) */}
@@ -120,8 +140,6 @@ export default function QuestionEditor({ question, onChange, onSave, onDelete, b
                             </div>
                         )}
                     </div>
-
-
                 </div>
 
                 {/* Question Title Input (Moved Below Settings) */}
@@ -136,7 +154,7 @@ export default function QuestionEditor({ question, onChange, onSave, onDelete, b
                 </div>
 
                 {/* Options List */}
-                {question.type === 'choice' && (
+                {(question.type === 'choice' || question.type === 'poll') && (
                     <div className="flex flex-col gap-4 mb-6">
                         <Reorder.Group axis="y" values={question.options} onReorder={handleReorderOptions} className="flex flex-col gap-4">
                             {question.options?.map((opt, idx) => (
@@ -179,8 +197,11 @@ export default function QuestionEditor({ question, onChange, onSave, onDelete, b
                     </div>
                 )}
 
-                {/* Save Button Area */}
-                <div className="flex justify-end pt-4">
+                {/* Footer Actions */}
+                <div className="flex justify-between pt-4">
+                    {/* Spacer to push Save button to right if needed, or just justify-end */}
+                    <div />
+
                     <button
                         onClick={onSave}
                         className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/25 hover:bg-indigo-700 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all active:scale-95 active:translate-y-0"
@@ -191,6 +212,6 @@ export default function QuestionEditor({ question, onChange, onSave, onDelete, b
                 </div>
 
             </div>
-        </div>
+        </div >
     );
 }

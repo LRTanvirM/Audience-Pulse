@@ -1,25 +1,44 @@
 import React, { useState } from 'react';
-import { BarChart as BarChartIcon, PieChart as PieChartIcon, LineChart as LineChartIcon, Circle, ChevronDown, LayoutGrid } from 'lucide-react';
+import { BarChart as BarChartIcon, PieChart as PieChartIcon, LineChart as LineChartIcon, Circle, ChevronDown, LayoutGrid, Eye, EyeOff } from 'lucide-react';
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
 
-export default function LiveResults({ question, responses, darkMode }) {
+export default function LiveResults({ question, responses, darkMode, isPreview, onBackToEditor, showResultsByDefault }) {
     const [chartType, setChartType] = useState('bar'); // bar, pie, donut, line
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [showChart, setShowChart] = useState(isPreview || (showResultsByDefault !== undefined ? showResultsByDefault : true)); // Default hidden for suspense, unless preview or default setting
+
+    // Update showChart when isPreview changes
+    React.useEffect(() => {
+        if (isPreview) setShowChart(true);
+    }, [isPreview]);
+
+    // Update showChart when showResultsByDefault changes (only if not preview)
+    React.useEffect(() => {
+        if (!isPreview && showResultsByDefault !== undefined) {
+            // Only set if we haven't manually toggled? Or just respect the prop?
+            // Usually for a "default" setting, we only care about initialization.
+            // But if the user changes the setting mid-session, maybe we should update?
+            // Let's stick to initialization for now, but the state initialization above handles it.
+            // If the component re-mounts (which it might when switching views), it will pick it up.
+        }
+    }, [showResultsByDefault, isPreview]);
 
     const chartData = React.useMemo(() => {
         if (!question) return [];
-        const counts = {};
-        if (question.type === 'choice') {
-            question.options?.forEach(opt => counts[opt] = 0);
-            responses.forEach(r => {
-                if (counts[r.answer] !== undefined) counts[r.answer]++;
-            });
-            return Object.entries(counts).map(([name, value]) => ({ name, value }));
+
+        if (question.type === 'choice' || question.type === 'poll') {
+            // Map options directly to preserve order and duplicates (e.g. empty strings)
+            return question.options?.map(opt => ({
+                name: opt,
+                value: responses.filter(r => r.answer === opt).length
+            })) || [];
         }
+
         if (question.type === 'reaction') {
+            const counts = {};
             ['👍', '❤️', '😂', '😮', '😢'].forEach(emoji => counts[emoji] = 0);
             responses.forEach(r => {
                 if (counts[r.answer] !== undefined) counts[r.answer]++;
@@ -162,12 +181,44 @@ export default function LiveResults({ question, responses, darkMode }) {
     return (
         <div className={`rounded-3xl p-8 h-full flex flex-col border-2 relative overflow-hidden transition-colors duration-300 ${darkMode ? 'bg-slate-900/75 backdrop-blur-xl border-white/10' : 'bg-gray-200/50 border-purple-400/30'}`}>
 
-            {/* Chart Type Selector */}
-            <div className="absolute top-6 right-6 z-50">
+            {/* Back to Editor (Top Left) */}
+            {onBackToEditor && (
+                <div className="absolute top-6 left-6 z-[60]">
+                    <button
+                        onClick={onBackToEditor}
+                        className={`group flex items-center px-4 py-3 rounded-full font-bold transition-all shadow-lg hover:-translate-y-0.5 ${darkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+                    >
+                        <ChevronDown className="rotate-90" size={20} />
+                        <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap">
+                            Back to Editor
+                        </span>
+                    </button>
+                </div>
+            )}
+
+            {/* Right Controls (Top Right) */}
+            <div className="absolute top-6 right-6 z-[60] flex gap-3">
+                {/* Show/Hide Results Button */}
+                {question.type !== 'text' && (
+                    <button
+                        onClick={() => setShowChart(!showChart)}
+                        className={`group flex items-center px-4 py-3 rounded-full font-bold transition-all shadow-lg hover:-translate-y-0.5 ${showChart
+                            ? (darkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-200 text-slate-600 hover:bg-slate-300')
+                            : (darkMode ? 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-500/25' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/25')
+                            }`}
+                    >
+                        {showChart ? <EyeOff size={20} /> : <Eye size={20} />}
+                        <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap">
+                            {showChart ? 'Hide Results' : 'Show Results'}
+                        </span>
+                    </button>
+                )}
+
+                {/* Chart Type Selector */}
                 <div className="relative">
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className={`p-2 rounded-xl border transition-all ${darkMode ? 'bg-white/10 border-white/10 text-white hover:bg-white/20' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                        className={`p-3 rounded-full border transition-all shadow-lg hover:-translate-y-0.5 ${darkMode ? 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                     >
                         <LayoutGrid size={20} />
                     </button>
@@ -203,7 +254,9 @@ export default function LiveResults({ question, responses, darkMode }) {
             </div>
 
             <div className="text-center mb-16 z-10">
-                <div className={`text-2xl font-bold uppercase tracking-[0.2em] mb-2 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Live Results</div>
+                <div className={`text-2xl font-bold uppercase tracking-[0.2em] mb-2 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                    {isPreview ? 'Results Preview' : 'Live Results'}
+                </div>
                 <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{question.text}</h2>
             </div>
 
@@ -219,7 +272,16 @@ export default function LiveResults({ question, responses, darkMode }) {
                         {responses.length === 0 && <p className={`italic ${darkMode ? 'text-slate-500' : 'text-gray-400'}`}>Waiting for responses...</p>}
                     </div>
                 ) : (
-                    renderChart()
+                    <div className="w-full h-full flex items-center justify-center">
+                        {showChart ? (
+                            renderChart()
+                        ) : (
+                            <div className="text-center">
+                                <div className={`text-6xl font-black mb-4 ${darkMode ? 'text-slate-700' : 'text-slate-200'}`}>?</div>
+                                <p className={`font-medium ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Results are hidden</p>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
         </div>

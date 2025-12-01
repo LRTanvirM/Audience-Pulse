@@ -74,7 +74,7 @@ export default function TopBar({ sessionId, sessionName, participantCount, onTog
     }, [isEditingName]);
 
     const handleCopyLink = () => {
-        const url = `${window.location.origin}${window.location.pathname}?session=${sessionId}`;
+        const url = `${window.location.href.split('?')[0]}?session=${sessionId}`;
         navigator.clipboard.writeText(url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);

@@ -13,10 +13,11 @@ const BRAND_COLORS = [
     '#111827', // Gray
 ];
 
-export default function SettingsModal({ isOpen, onClose, sessionName, brandColor, requireName: initialRequireName, onUpdateSettings, darkMode, isSetupMode }) {
+export default function SettingsModal({ isOpen, onClose, sessionName, brandColor, requireName: initialRequireName, showResultsByDefault: initialShowResults, onUpdateSettings, darkMode, isSetupMode }) {
     const [name, setName] = useState(sessionName || '');
     const [selectedColor, setSelectedColor] = useState(brandColor);
     const [requireName, setRequireName] = useState(false);
+    const [showResultsByDefault, setShowResultsByDefault] = useState(false);
     const [isColorPickerExpanded, setIsColorPickerExpanded] = useState(false);
 
     useEffect(() => {
@@ -24,15 +25,17 @@ export default function SettingsModal({ isOpen, onClose, sessionName, brandColor
             setName(sessionName || '');
             setSelectedColor(brandColor || '#0ea5e9'); // Default to blue
             setRequireName(initialRequireName || false);
+            setShowResultsByDefault(initialShowResults !== undefined ? initialShowResults : true);
             setIsColorPickerExpanded(false);
         }
-    }, [isOpen, sessionName, brandColor, initialRequireName]);
+    }, [isOpen, sessionName, brandColor, initialRequireName, initialShowResults]);
 
     const handleSave = () => {
         onUpdateSettings({
             name: name,
             brandColor: selectedColor,
-            requireName: requireName
+            requireName: requireName,
+            showResultsByDefault: showResultsByDefault
         });
         onClose();
     };
@@ -150,26 +153,51 @@ export default function SettingsModal({ isOpen, onClose, sessionName, brandColor
                                     </div>
                                 </div>
 
-                                {/* Require Name Toggle */}
-                                <div className={`flex items-center justify-between p-4 rounded-2xl ${darkMode ? 'bg-white/5' : 'bg-gray-50'}`}>
-                                    <div className="flex flex-col">
-                                        <span className={`text-sm font-bold uppercase tracking-wider ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
-                                            Require Name
-                                        </span>
+                                {/* Toggles Container */}
+                                <div className="space-y-4">
+                                    {/* Require Name Toggle */}
+                                    <div className={`flex items-center justify-between p-4 rounded-2xl ${darkMode ? 'bg-white/5' : 'bg-gray-50'}`}>
+                                        <div className="flex flex-col">
+                                            <span className={`text-sm font-bold uppercase tracking-wider ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+                                                Require Name
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => setRequireName(!requireName)}
+                                            className={`w-12 h-7 rounded-full transition-colors relative ${requireName
+                                                ? (darkMode ? 'bg-indigo-500' : 'bg-indigo-600')
+                                                : (darkMode ? 'bg-slate-700' : 'bg-gray-300')
+                                                }`}
+                                        >
+                                            <motion.div
+                                                initial={false}
+                                                animate={{ x: requireName ? 22 : 2 }}
+                                                className="w-5 h-5 bg-white rounded-full shadow-sm absolute top-1"
+                                            />
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={() => setRequireName(!requireName)}
-                                        className={`w-12 h-7 rounded-full transition-colors relative ${requireName
-                                            ? (darkMode ? 'bg-indigo-500' : 'bg-indigo-600')
-                                            : (darkMode ? 'bg-slate-700' : 'bg-gray-300')
-                                            }`}
-                                    >
-                                        <motion.div
-                                            initial={false}
-                                            animate={{ x: requireName ? 22 : 2 }}
-                                            className="w-5 h-5 bg-white rounded-full shadow-sm absolute top-1"
-                                        />
-                                    </button>
+
+                                    {/* Show Results by Default Toggle */}
+                                    <div className={`flex items-center justify-between p-4 rounded-2xl ${darkMode ? 'bg-white/5' : 'bg-gray-50'}`}>
+                                        <div className="flex flex-col">
+                                            <span className={`text-sm font-bold uppercase tracking-wider ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+                                                Show Results by Default
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => setShowResultsByDefault(!showResultsByDefault)}
+                                            className={`w-12 h-7 rounded-full transition-colors relative ${showResultsByDefault
+                                                ? (darkMode ? 'bg-indigo-500' : 'bg-indigo-600')
+                                                : (darkMode ? 'bg-slate-700' : 'bg-gray-300')
+                                                }`}
+                                        >
+                                            <motion.div
+                                                initial={false}
+                                                animate={{ x: showResultsByDefault ? 22 : 2 }}
+                                                className="w-5 h-5 bg-white rounded-full shadow-sm absolute top-1"
+                                            />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

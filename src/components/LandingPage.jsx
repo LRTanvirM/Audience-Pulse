@@ -75,7 +75,7 @@ export default function LandingPage({ setAppState, setSessionId, db }) {
                     </p>
 
                     {savedSessionId && (
-                        <div className="mt-6 md:mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 shrink-0">
+                        <div className="mt-6 md:mt-8 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 shrink-0">
                             <button
                                 onClick={rejoinSession}
                                 className="group inline-flex items-center px-6 py-3 md:px-8 md:py-4 rounded-full bg-white text-indigo-900 font-bold shadow-[0_0_40px_-10px_rgba(255,255,255,0.6)] hover:shadow-[0_0_60px_-10px_rgba(255,255,255,0.8)] hover:scale-105 transition-all duration-300 text-sm md:text-base"
@@ -97,7 +97,7 @@ export default function LandingPage({ setAppState, setSessionId, db }) {
                         </div>
                         <h2 className="text-xl md:text-3xl font-bold text-white mb-1 md:mb-3">Host a Session</h2>
                         <p className="text-blue-100/60 text-sm md:text-lg mb-4 md:mb-8 leading-relaxed hidden sm:block">Create a new room, generate a QR code, and control the flow.</p>
-                        <div className="mt-auto opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 hidden sm:block">
+                        <div className="mt-auto transition-all duration-300">
                             <span className="inline-flex items-center text-white font-bold bg-white/10 px-5 py-2 md:px-6 md:py-2 rounded-full border border-white/10 text-sm md:text-base">
                                 Get Started <ArrowRight className="w-4 h-4 ml-2" />
                             </span>
@@ -113,7 +113,7 @@ export default function LandingPage({ setAppState, setSessionId, db }) {
                         </div>
                         <h2 className="text-xl md:text-3xl font-bold text-white mb-1 md:mb-3">Join Session</h2>
                         <p className="text-blue-100/60 text-sm md:text-lg mb-4 md:mb-8 leading-relaxed hidden sm:block">Enter a code or scan a QR to participate in a live poll.</p>
-                        <div className="mt-auto opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 hidden sm:block">
+                        <div className="mt-auto transition-all duration-300">
                             <span className="inline-flex items-center text-white font-bold bg-white/10 px-5 py-2 md:px-6 md:py-2 rounded-full border border-white/10 text-sm md:text-base">
                                 Join Now <ArrowRight className="w-4 h-4 ml-2" />
                             </span>

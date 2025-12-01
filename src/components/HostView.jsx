@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { doc, onSnapshot, collection, updateDoc, addDoc, deleteDoc, serverTimestamp, query, orderBy, getDocs } from 'firebase/firestore';
 import { AlertCircle, Link, Check } from 'lucide-react';
 import QRCode from 'react-qr-code';
@@ -99,7 +99,7 @@ export default function HostView({ db, sessionId }) {
 
     // --- ACTIONS ---
 
-    const handleAddQuestion = async () => {
+    const handleAddQuestion = useCallback(async () => {
         const newQuestion = {
             text: '',
             type: 'choice',
@@ -116,9 +116,9 @@ export default function HostView({ db, sessionId }) {
             options: [{ id: crypto.randomUUID(), text: '' }, { id: crypto.randomUUID(), text: '' }]
         });
         setViewMode('setup');
-    };
+    }, [db, sessionId, questions.length]);
 
-    const handleSelectQuestion = (q) => {
+    const handleSelectQuestion = useCallback((q) => {
         // Convert string options to objects for editor
         const optionsAsObjects = q.options?.map(opt => ({
             id: crypto.randomUUID(),
@@ -133,13 +133,13 @@ export default function HostView({ db, sessionId }) {
         if (viewMode === 'control') {
             setViewMode('setup');
         }
-    };
+    }, [viewMode]);
 
-    const handleDeleteClick = (qId) => {
+    const handleDeleteClick = useCallback((qId) => {
         setDeleteModal({ isOpen: true, questionId: qId });
-    };
+    }, []);
 
-    const confirmDeleteQuestion = async () => {
+    const confirmDeleteQuestion = useCallback(async () => {
         const qId = deleteModal.questionId;
         if (qId) {
             await deleteDoc(doc(db, 'sessions', sessionId, 'questions', qId));
@@ -148,9 +148,9 @@ export default function HostView({ db, sessionId }) {
             }
         }
         setDeleteModal({ isOpen: false, questionId: null });
-    };
+    }, [deleteModal.questionId, db, sessionId, currentQuestion.id, handleAddQuestion]);
 
-    const handleReorder = async (newQuestions) => {
+    const handleReorder = useCallback(async (newQuestions) => {
         setQuestions(newQuestions); // Optimistic update
 
         // Update order in Firestore
@@ -158,7 +158,7 @@ export default function HostView({ db, sessionId }) {
             updateDoc(doc(db, 'sessions', sessionId, 'questions', q.id), { order: index })
         );
         await Promise.all(updates);
-    };
+    }, [db, sessionId]);
 
     const handleUpdateSettings = async (settings) => {
         try {
@@ -264,6 +264,12 @@ export default function HostView({ db, sessionId }) {
         return responses.filter(r => r.questionId === sessionData.currentQuestion.id);
     }, [responses, sessionData]);
 
+
+    // Filter responses for the currently selected question (for preview)
+    const selectedQuestionResponses = useMemo(() => {
+        if (!currentQuestion?.id || currentQuestion.id === 'new') return [];
+        return responses.filter(r => r.questionId === currentQuestion.id);
+    }, [responses, currentQuestion]);
 
     // Dark Mode State
     const [darkMode, setDarkMode] = useState(() => {
@@ -394,14 +400,28 @@ export default function HostView({ db, sessionId }) {
                             onChange={setCurrentQuestion}
                             onSave={handleSaveQuestion}
                             onDelete={() => handleDeleteClick(currentQuestion.id)}
+                            onViewResults={() => setViewMode('results')}
                             brandColor={brandColor}
                             darkMode={darkMode}
+                        />
+                    ) : viewMode === 'results' ? (
+                        <LiveResults
+                            question={{
+                                ...currentQuestion,
+                                options: currentQuestion.options?.map(o => o.text) || []
+                            }}
+                            responses={selectedQuestionResponses}
+                            darkMode={darkMode}
+                            isPreview={true}
+                            onBackToEditor={() => setViewMode('setup')}
                         />
                     ) : (
                         <LiveResults
                             question={sessionData.currentQuestion}
                             responses={currentResponses}
                             darkMode={darkMode}
+                            onBackToEditor={() => setViewMode('setup')}
+                            showResultsByDefault={sessionData.showResultsByDefault}
                         />
                     )}
                 </section>
