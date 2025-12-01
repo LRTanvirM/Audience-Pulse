@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+
+  // Helper to check if a session is still active
+  function isSessionActive(sessionId) {
+    // expects sessions/{sessionId}.expiresAt to be a Firestore timestamp
+    return get(
+      /databases/$(database)/documents/sessions/$(sessionId)
+    ).data.expiresAt > request.time;
+  }
+
+  match /databases/{database}/documents {
+
+    // ====== SESSIONS COLLECTION ======
+    match /sessions/{sessionId} {
+
+      // Anyone can read session metadata (to join & show results)
+      allow read: if true;
+
+      // Only authenticated users can create a session (Host)
+      allow create: if request.auth != null;
+
+      // Only the host can update/delete their own session
+      allow update, delete: if request.auth != null &&
+                            request.auth.uid == resource.data.hostId;
+
+      // ====== QUESTIONS SUBCOLLECTION ======
+      match /questions/{questionId} {
+
+        // Participants + Host need to read questions
+        allow read: if true;
+
+        // Only Host can create/update/delete questions
+        allow create, update, delete: if request.auth != null &&
+          get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid;
+      }
+
+      // ====== RESPONSES SUBCOLLECTION ======
+      match /responses/{responseId} {
+
+        // Host and participants can read responses (for live results)
+        allow read: if true;
+
+        // Create: any signed-in user can submit, but must use their own uid
+        allow create: if request.auth != null &&
+          request.resource.data.uid == request.auth.uid;
+
+        // Update/Delete: a user can only change their own response
+        allow update, delete: if request.auth != null &&
+          resource.data.uid == request.auth.uid;
+      }
+    }
+
+    // ====== DENY EVERYTHING ELSE BY DEFAULT ======
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
