@@ -9,6 +9,7 @@ import LandingPage from './components/LandingPage';
 import HostView from './components/HostView';
 import ParticipantView from './components/ParticipantView';
 import Card from './components/ui/Card';
+import NebulaBackground from './components/ui/NebulaBackground';
 
 // --- CONFIGURATION ---
 // USER MUST FILL THIS IN
@@ -109,10 +110,16 @@ export default function App() {
         );
     }
 
-    if (!db) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
+    if (!db) return (
+        <NebulaBackground>
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-white" />
+            </div>
+        </NebulaBackground>
+    );
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+        <div className="min-h-screen bg-[#0f172a] text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
             <Toaster position="top-center" richColors />
             <AnimatePresence mode="wait">
                 {appState === 'landing' && (
