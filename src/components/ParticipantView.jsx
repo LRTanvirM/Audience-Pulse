@@ -84,6 +84,7 @@ export default function ParticipantView({ db, initialSessionId }) {
                 });
 
                 // Handle step transitions based on requireName
+                console.log('DEBUG: Step:', step, 'RequireName:', data.requireName);
                 if (step === 'verifying') {
                     if (data.requireName) {
                         setStep('name');
@@ -111,8 +112,10 @@ export default function ParticipantView({ db, initialSessionId }) {
     useEffect(() => {
         if (step === 'participating' && sessionData?.requireName) {
             const currentName = localStorage.getItem('participant_name');
+            console.log('DEBUG: Retroactive check triggered. CurrentName:', currentName);
 
             if (!currentName || currentName.startsWith('Anonymous')) {
+                console.log('DEBUG: Forcing name entry');
                 setStep('name');
                 setNickname('');
                 toast.info("The host now requires a name to participate.");

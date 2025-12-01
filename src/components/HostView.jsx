@@ -291,6 +291,7 @@ export default function HostView({ db, sessionId }) {
 
     const brandColor = sessionData.brandColor || '#4f46e5'; // Default indigo-600
     const isSetupMode = sessionData?.isSetup === false;
+    console.log('DEBUG: HostView render', { isSetup: sessionData?.isSetup, isSetupMode, sessionData });
 
     return (
         <div className={`h-screen w-screen flex flex-col p-5 gap-8 overflow-hidden font-sans transition-colors duration-300 ${darkMode ? 'bg-[#020617] text-[#F8FAFC]' : 'bg-slate-100 text-slate-800'}`}>
