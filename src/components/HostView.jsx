@@ -34,7 +34,7 @@ export default function HostView({ db, sessionId }) {
     const [endSessionModal, setEndSessionModal] = useState(false);
 
     const handleCopyLink = () => {
-        const url = `${window.location.origin}?session=${sessionId}`;
+        const url = `${window.location.href.split('?')[0]}?session=${sessionId}`;
         navigator.clipboard.writeText(url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -313,7 +313,7 @@ export default function HostView({ db, sessionId }) {
                         onClick={() => setShowQr(false)}
                     >
                         <div className="bg-white p-8 rounded-3xl shadow-xl border-2 border-gray-100" onClick={e => e.stopPropagation()}>
-                            <QRCode value={`${window.location.origin}?session=${sessionId}`} size={300} />
+                            <QRCode value={`${window.location.href.split('?')[0]}?session=${sessionId}`} size={300} />
                             <p className="text-center mt-8 text-5xl font-black text-gray-900 tracking-widest">{sessionId}</p>
                             <button
                                 onClick={handleCopyLink}
